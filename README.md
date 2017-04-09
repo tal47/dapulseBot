@@ -13,6 +13,7 @@ Welcome to dapulseBot! I am a baic python Telegram bot that allows you to send p
 $ git clone https://github.com/tal47/dapulseBot.git
 $ cd dapulseBot
 $ dapulseBot.py <api_key> <token> <room_id>
+On the bot itself - don't forget to start the bot with  /start message
 ```
 
 ##### For example

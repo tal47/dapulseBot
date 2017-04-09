@@ -18,12 +18,15 @@ TEXT = """
     And watch it created at Dapulse :) N~Joy!
     """
 
-def init():
+config = [] 
+
+def parseArgs():
     if len(sys.argv) != 4:
         print("Error! Please add all arguments")
         print("Number of given arguments: " + str(len(sys.argv) -1 ) )
         print("Your arguments:" + str(sys.argv[1:len(sys.argv)]))
         sys.exit()
+    return {'api_key' : sys.argv[1], 'token' : sys.argv[2], 'board_id': sys.argv[3] }
 
 def start(bot, update):
     bot.sendMessage(chat_id=update.message.chat_id, text=TEXT)
@@ -31,18 +34,16 @@ def start(bot, update):
 def addTask(bot, update):
     bot.sendMessage(chat_id=update.message.chat_id, text=parseRequest(update.message.text))
 
-def httpOK(r):
+def isHttpRetCodeOK(r):
     return r >= 200 and r < 300
-
 
 def getUsers():
     users = []
-    r = requests.get("https://api.dapulse.com:443/v1/users.json?api_key=" + sys.argv[1] ) # api_key
-    if not httpOK(r.status_code):
+    r = requests.get("https://api.dapulse.com:443/v1/users.json?api_key=" + config['api_key']) # api_key
+    if not isHttpRetCodeOK(r.status_code):
         return []
     data = json.loads(r.content.decode('utf-8'))
-    for user in data:
-        users.append((user['name'], user['id']))
+    users = [(user['name'], user['id']) for user in data]
     return users
 
 def parseRequest(text):
@@ -63,19 +64,20 @@ def parseRequest(text):
     if retUser == "":
         return "User " + user + " is wrong. fix and try again"
 
-    url = "https://api.dapulse.com:443/v1/boards/" + sys.argv[3] + "/pulses.json?api_key=" + sys.argv[1] # board_id, api_key
+    url = "https://api.dapulse.com:443/v1/boards/" + config['board_id'] + "/pulses.json?api_key=" + config['api_key'] # board_id, api_key
     payload = { "pulse": { "name": task }, "user_id": retId }
 
     r = requests.post(url, data=json.dumps(payload))
-    print(r)
-    if not httpOK(r.status_code):
+
+    if not isHttpRetCodeOK(r.status_code):
         return "Error! Code: " + str(r.status_code)
     return "Added task: " + task + ", Dest user: " + retUser 
 
 def main():
-    init()
-    token = sys.argv[2] #token
-    updater = Updater(token=token)
+    global config 
+    config = parseArgs()
+
+    updater = Updater(token=config['token'])
     dispatcher = updater.dispatcher
     
     start_handler = CommandHandler('start', start)
